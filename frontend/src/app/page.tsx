@@ -5,15 +5,21 @@ import DashboardCard from "@/components/DashboardCard";
 import ChartComponent from "@/components/ChartComponent";
 import { Zap, Activity, Battery, BatteryCharging, AlertTriangle, Sun } from "lucide-react";
 
-// Hourly mock data (today)
+// Hourly mock data (today) — realistic 3-phase industrial profile
 const hourlyLabels = ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
-const konsumsiHariIni = [3.3, 2.7, 2.4, 2.1, 2.4, 3.6, 5.3, 7.4, 9.5, 11.3, 12.2, 13.4, 14.3, 13.7, 12.8, 11.6, 12.5, 15.2, 16.4, 15.5, 14.3, 11.9];
-const teganganR = hourlyLabels.map(() => +(218 + Math.random() * 5).toFixed(1));
-const teganganS = hourlyLabels.map(() => +(217 + Math.random() * 5).toFixed(1));
-const teganganT = hourlyLabels.map(() => +(219 + Math.random() * 5).toFixed(1));
-const arusR = [1.1, 0.9, 0.8, 0.7, 0.8, 1.2, 1.8, 2.5, 3.2, 3.8, 4.1, 4.5, 4.8, 4.6, 4.3, 3.9, 4.2, 5.1, 5.5, 5.2, 4.8, 4.0];
-const arusS = arusR.map(v => +(v * 0.95).toFixed(2));
-const arusT = arusR.map(v => +(v * 1.05).toFixed(2));
+
+// Konsumsi: rendah malam, naik pagi, puncak sore
+const konsumsiHariIni = [2.8, 2.1, 1.9, 1.7, 2.0, 4.1, 6.8, 10.2, 13.5, 15.1, 16.3, 17.0, 15.8, 14.2, 16.4, 17.8, 18.5, 19.2, 21.6, 18.3, 14.7, 10.4];
+
+// Tegangan: tiap fasa punya fluktuasi sendiri (ada voltage sag jam sibuk)
+const teganganR = [221.2, 220.8, 221.5, 221.0, 220.5, 219.8, 218.3, 216.9, 215.4, 216.2, 217.1, 216.5, 215.8, 216.3, 217.4, 216.8, 215.9, 214.7, 213.8, 215.2, 217.6, 219.4];
+const teganganS = [220.5, 220.1, 220.9, 220.4, 219.9, 219.1, 217.6, 216.1, 214.5, 215.3, 216.4, 215.7, 214.9, 215.6, 216.8, 216.1, 215.2, 213.9, 212.9, 214.5, 216.9, 218.8];
+const teganganT = [222.1, 221.7, 222.3, 221.8, 221.2, 220.4, 218.9, 217.4, 215.9, 216.7, 217.8, 217.1, 216.2, 217.0, 218.2, 217.5, 216.5, 215.2, 214.2, 215.8, 218.3, 220.1];
+
+// Arus: tiap fasa benar-benar independen (beban tak seimbang antar fasa)
+const arusR = [0.9, 0.7, 0.6, 0.5, 0.7, 1.7, 2.8, 4.4, 5.9, 6.6, 7.1, 7.4, 6.9, 6.3, 7.2, 7.8, 8.1, 8.5, 9.6, 8.1, 6.4, 4.3];
+const arusS = [1.2, 0.9, 0.8, 0.6, 0.9, 2.1, 3.5, 5.2, 6.8, 7.5, 8.0, 8.5, 7.8, 7.1, 8.1, 8.8, 9.2, 9.7, 11.0, 9.3, 7.3, 5.0];
+const arusT = [0.7, 0.5, 0.5, 0.4, 0.6, 1.4, 2.3, 3.7, 5.0, 5.8, 6.3, 6.6, 6.1, 5.5, 6.4, 7.0, 7.3, 7.6, 8.5, 7.2, 5.7, 3.8];
 
 // Totals
 const teganganRataRata = hourlyLabels.map((_, i) => +((teganganR[i] + teganganS[i] + teganganT[i]) / 3).toFixed(1));
