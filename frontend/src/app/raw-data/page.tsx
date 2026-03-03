@@ -3,32 +3,26 @@
 import { useState } from "react";
 import { Table, Search, Download, ChevronLeft, ChevronRight, Wifi } from "lucide-react";
 
-// Mock data: raw ESP32 sensor readings
+// Mock data: raw ESP32 sensor readings — single phase
 const generateMockData = () => {
     const records = [];
-    const base = new Date("2026-03-02T00:00:00");
+    const base = new Date("2026-03-03T00:00:00");
     for (let i = 0; i < 100; i++) {
         const ts = new Date(base.getTime() + i * 15 * 60 * 1000); // every 15 minutes
         const hour = ts.getHours();
-        const loadFactor = hour >= 7 && hour <= 20 ? 1.0 + Math.random() * 0.5 : 0.3 + Math.random() * 0.4;
-        const vr = +(218 + Math.random() * 6).toFixed(1);
-        const vs = +(217 + Math.random() * 6).toFixed(1);
-        const vt = +(219 + Math.random() * 6).toFixed(1);
-        const ir = +(4 * loadFactor + Math.random() * 0.5).toFixed(2);
-        const is = +(3.8 * loadFactor + Math.random() * 0.5).toFixed(2);
-        const it = +(4.2 * loadFactor + Math.random() * 0.5).toFixed(2);
-        const pr = +(vr * ir * 0.95 / 1000).toFixed(3);
-        const ps = +(vs * is * 0.95 / 1000).toFixed(3);
-        const pt = +(vt * it * 0.95 / 1000).toFixed(3);
+        const loadFactor = hour >= 7 && hour <= 20 ? 1.0 + Math.random() * 0.5 : 0.3 + Math.random() * 0.3;
+        const v = +(215 + Math.random() * 8).toFixed(1);
+        const a = +(8 * loadFactor + Math.random() * 1).toFixed(2);
+        const kw = +(v * a * 0.92 / 1000).toFixed(3);
+        const pf = +(0.88 + Math.random() * 0.08).toFixed(2);
         records.push({
             id: i + 1,
             timestamp: ts.toLocaleString("id-ID", { hour12: false }),
-            fasa_r: { v: vr, a: ir, kw: pr },
-            fasa_s: { v: vs, a: is, kw: ps },
-            fasa_t: { v: vt, a: it, kw: pt },
-            total_kw: +(pr + ps + pt).toFixed(3),
-            pf: +(0.92 + Math.random() * 0.06).toFixed(2),
-            status: Math.random() > 0.05 ? "Normal" : "Warning",
+            v,
+            a,
+            kw,
+            pf,
+            status: Math.random() > 0.06 ? "Normal" : "Warning",
         });
     }
     return records;
@@ -93,7 +87,6 @@ export default function RawData() {
                         <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">{filtered.length} record</span>
                     </div>
                     <div className="flex gap-3 w-full sm:w-auto">
-                        {/* Status Filter */}
                         <select
                             value={statusFilter}
                             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
@@ -103,7 +96,6 @@ export default function RawData() {
                             <option>Normal</option>
                             <option>Warning</option>
                         </select>
-                        {/* Search */}
                         <div className="relative flex-1 sm:flex-none">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input
@@ -122,44 +114,30 @@ export default function RawData() {
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                                <th className="px-4 py-3 text-left">ID</th>
-                                <th className="px-4 py-3 text-left">Timestamp</th>
-                                <th className="px-4 py-3 text-right">V-R (V)</th>
-                                <th className="px-4 py-3 text-right">I-R (A)</th>
-                                <th className="px-4 py-3 text-right">P-R (kW)</th>
-                                <th className="px-4 py-3 text-right">V-S (V)</th>
-                                <th className="px-4 py-3 text-right">I-S (A)</th>
-                                <th className="px-4 py-3 text-right">P-S (kW)</th>
-                                <th className="px-4 py-3 text-right">V-T (V)</th>
-                                <th className="px-4 py-3 text-right">I-T (A)</th>
-                                <th className="px-4 py-3 text-right">P-T (kW)</th>
-                                <th className="px-4 py-3 text-right">Total (kW)</th>
-                                <th className="px-4 py-3 text-right">PF</th>
-                                <th className="px-4 py-3 text-center">Status</th>
+                                <th className="px-5 py-3 text-left">ID</th>
+                                <th className="px-5 py-3 text-left">Timestamp</th>
+                                <th className="px-5 py-3 text-right">Tegangan (V)</th>
+                                <th className="px-5 py-3 text-right">Arus (A)</th>
+                                <th className="px-5 py-3 text-right">Daya (kW)</th>
+                                <th className="px-5 py-3 text-right">Power Factor</th>
+                                <th className="px-5 py-3 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {paginated.length === 0 ? (
                                 <tr>
-                                    <td colSpan={14} className="px-6 py-12 text-center text-slate-400">Tidak ada data ditemukan.</td>
+                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400">Tidak ada data ditemukan.</td>
                                 </tr>
                             ) : (
                                 paginated.map((row) => (
-                                    <tr key={row.id} className={`hover:bg-blue-50/40 transition-colors text-xs ${row.status === "Warning" ? "bg-amber-50" : ""}`}>
-                                        <td className="px-4 py-2.5 text-slate-400 font-mono">{row.id}</td>
-                                        <td className="px-4 py-2.5 text-slate-600 whitespace-nowrap font-mono">{row.timestamp}</td>
-                                        <td className="px-4 py-2.5 text-right text-slate-700">{row.fasa_r.v}</td>
-                                        <td className="px-4 py-2.5 text-right text-slate-700">{row.fasa_r.a}</td>
-                                        <td className="px-4 py-2.5 text-right text-indigo-600 font-medium">{row.fasa_r.kw}</td>
-                                        <td className="px-4 py-2.5 text-right text-slate-700">{row.fasa_s.v}</td>
-                                        <td className="px-4 py-2.5 text-right text-slate-700">{row.fasa_s.a}</td>
-                                        <td className="px-4 py-2.5 text-right text-blue-600 font-medium">{row.fasa_s.kw}</td>
-                                        <td className="px-4 py-2.5 text-right text-slate-700">{row.fasa_t.v}</td>
-                                        <td className="px-4 py-2.5 text-right text-slate-700">{row.fasa_t.a}</td>
-                                        <td className="px-4 py-2.5 text-right text-sky-600 font-medium">{row.fasa_t.kw}</td>
-                                        <td className="px-4 py-2.5 text-right font-bold text-slate-800">{row.total_kw}</td>
-                                        <td className="px-4 py-2.5 text-right text-slate-600">{row.pf}</td>
-                                        <td className="px-4 py-2.5 text-center">
+                                    <tr key={row.id} className={`hover:bg-blue-50/40 transition-colors ${row.status === "Warning" ? "bg-amber-50" : ""}`}>
+                                        <td className="px-5 py-2.5 text-slate-400 font-mono text-xs">{row.id}</td>
+                                        <td className="px-5 py-2.5 text-slate-600 whitespace-nowrap font-mono text-xs">{row.timestamp}</td>
+                                        <td className="px-5 py-2.5 text-right text-red-600 font-medium">{row.v}</td>
+                                        <td className="px-5 py-2.5 text-right text-green-600 font-medium">{row.a}</td>
+                                        <td className="px-5 py-2.5 text-right font-bold text-blue-700">{row.kw}</td>
+                                        <td className="px-5 py-2.5 text-right text-slate-600">{row.pf}</td>
+                                        <td className="px-5 py-2.5 text-center">
                                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${row.status === "Warning"
                                                     ? "bg-amber-100 text-amber-700"
                                                     : "bg-green-100 text-green-700"
