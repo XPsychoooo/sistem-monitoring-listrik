@@ -1,211 +1,162 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, Calculator, Info, TrendingUp } from "lucide-react";
+import { Zap, Receipt } from "lucide-react";
 
-// Data tarif PLN 2024 — berdasarkan Permen ESDM No. 3 Tahun 2020
-const tarifPLN = [
-    { golongan: "R-1/TR", daya: "450 VA", tarif: 415, jenis: "Rumah Tangga", abonemen: 11_500 },
-    { golongan: "R-1/TR", daya: "900 VA (subsidi)", tarif: 605, jenis: "Rumah Tangga", abonemen: 20_000 },
-    { golongan: "R-1/TR", daya: "900 VA (mampu)", tarif: 1_352, jenis: "Rumah Tangga", abonemen: 31_000 },
-    { golongan: "R-1/TR", daya: "1.300 VA", tarif: 1_444.7, jenis: "Rumah Tangga", abonemen: 38_000 },
-    { golongan: "R-1/TR", daya: "2.200 VA", tarif: 1_444.7, jenis: "Rumah Tangga", abonemen: 56_000 },
-    { golongan: "R-2/TR", daya: "3.500–5.500 VA", tarif: 1_699.53, jenis: "Rumah Tangga Menengah", abonemen: 97_000 },
-    { golongan: "R-3/TR", daya: "6.600 VA ke atas", tarif: 1_699.53, jenis: "Rumah Tangga Besar", abonemen: null },
-    { golongan: "B-1/TR", daya: "450–5.500 VA", tarif: 1_115, jenis: "Bisnis Kecil", abonemen: null },
-    { golongan: "B-2/TR", daya: "6.600 VA–200 kVA", tarif: 1_444.7, jenis: "Bisnis Menengah", abonemen: null },
-    { golongan: "B-3/TM", daya: "> 200 kVA", tarif: 1_114.74, jenis: "Bisnis Besar", abonemen: null },
-    { golongan: "I-1/TR", daya: "450 VA–14 kVA", tarif: 1_115, jenis: "Industri Kecil", abonemen: null },
-    { golongan: "I-2/TR", daya: "14 kVA–200 kVA", tarif: 1_444.7, jenis: "Industri Menengah", abonemen: null },
-    { golongan: "I-3/TM", daya: "> 200 kVA", tarif: 1_114.74, jenis: "Industri Besar", abonemen: null },
-    { golongan: "I-4/TT", daya: "> 30.000 kVA", tarif: 996.74, jenis: "Industri Sangat Besar", abonemen: null },
-    { golongan: "P-1/TR", daya: "450 VA–200 kVA", tarif: 1_699.53, jenis: "Pemerintah Kecil", abonemen: null },
-    { golongan: "P-2/TM", daya: "> 200 kVA", tarif: 1_522.88, jenis: "Pemerintah Besar", abonemen: null },
-    { golongan: "S-2/TR", daya: "450 VA–200 kVA", tarif: 1_444.7, jenis: "Sosial Menengah", abonemen: null },
+// Mock data harian (30 hari)
+const mockHarian = [
+    { tgl: "01 Mar 2026", hari: "Senin", kwh: 213.4 },
+    { tgl: "02 Mar 2026", hari: "Selasa", kwh: 198.7 },
+    { tgl: "03 Mar 2026", hari: "Rabu", kwh: 221.3 },
+    { tgl: "04 Mar 2026", hari: "Kamis", kwh: 235.6 },
+    { tgl: "05 Mar 2026", hari: "Jumat", kwh: 241.2 },
+    { tgl: "06 Mar 2026", hari: "Sabtu", kwh: 178.5 },
+    { tgl: "07 Mar 2026", hari: "Minggu", kwh: 162.3 },
+    { tgl: "08 Mar 2026", hari: "Senin", kwh: 228.9 },
+    { tgl: "09 Mar 2026", hari: "Selasa", kwh: 190.8 },
+    { tgl: "10 Mar 2026", hari: "Rabu", kwh: 244.1 },
+    { tgl: "11 Mar 2026", hari: "Kamis", kwh: 252.7 },
+    { tgl: "12 Mar 2026", hari: "Jumat", kwh: 261.3 },
+    { tgl: "13 Mar 2026", hari: "Sabtu", kwh: 183.4 },
+    { tgl: "14 Mar 2026", hari: "Minggu", kwh: 170.2 },
+    { tgl: "15 Mar 2026", hari: "Senin", kwh: 238.5 },
+    { tgl: "16 Mar 2026", hari: "Selasa", kwh: 219.6 },
+    { tgl: "17 Mar 2026", hari: "Rabu", kwh: 247.8 },
+    { tgl: "18 Mar 2026", hari: "Kamis", kwh: 255.4 },
+    { tgl: "19 Mar 2026", hari: "Jumat", kwh: 263.1 },
+    { tgl: "20 Mar 2026", hari: "Sabtu", kwh: 189.7 },
+    { tgl: "21 Mar 2026", hari: "Minggu", kwh: 175.3 },
+    { tgl: "22 Mar 2026", hari: "Senin", kwh: 232.8 },
+    { tgl: "23 Mar 2026", hari: "Selasa", kwh: 224.5 },
+    { tgl: "24 Mar 2026", hari: "Rabu", kwh: 249.2 },
+    { tgl: "25 Mar 2026", hari: "Kamis", kwh: 258.6 },
+    { tgl: "26 Mar 2026", hari: "Jumat", kwh: 267.4 },
+    { tgl: "27 Mar 2026", hari: "Sabtu", kwh: 192.1 },
+    { tgl: "28 Mar 2026", hari: "Minggu", kwh: 168.9 },
+    { tgl: "29 Mar 2026", hari: "Senin", kwh: 241.7 },
+    { tgl: "30 Mar 2026", hari: "Selasa", kwh: 234.3 },
 ];
 
-const jenisWarna: Record<string, string> = {
-    "Rumah Tangga": "bg-blue-100 text-blue-700",
-    "Rumah Tangga Menengah": "bg-indigo-100 text-indigo-700",
-    "Rumah Tangga Besar": "bg-violet-100 text-violet-700",
-    "Bisnis Kecil": "bg-emerald-100 text-emerald-700",
-    "Bisnis Menengah": "bg-green-100 text-green-700",
-    "Bisnis Besar": "bg-teal-100 text-teal-700",
-    "Industri Kecil": "bg-amber-100 text-amber-700",
-    "Industri Menengah": "bg-orange-100 text-orange-700",
-    "Industri Besar": "bg-red-100 text-red-700",
-    "Industri Sangat Besar": "bg-rose-100 text-rose-700",
-    "Pemerintah Kecil": "bg-cyan-100 text-cyan-700",
-    "Pemerintah Besar": "bg-sky-100 text-sky-700",
-    "Sosial Menengah": "bg-slate-100 text-slate-600",
-};
-
 export default function TarifListrik() {
-    const [kwhInput, setKwhInput] = useState<string>("");
-    const [golonganInput, setGolonganInput] = useState<string>("I-2/TR");
-    const [filterJenis, setFilterJenis] = useState<string>("Semua");
-    const jenisOptions = ["Semua", ...Array.from(new Set(tarifPLN.map(t => t.jenis)))];
+    const [tarifInput, setTarifInput] = useState<string>("1444.70");
 
-    const selectedTarif = tarifPLN.find(t => t.golongan === golonganInput && ["I-2/TR", "R-1/TR"].includes(golonganInput) ? t.daya.includes("200") || t.daya.includes("6.600") : true);
-    const tarifPerKwh = tarifPLN.find(t => t.golongan === golonganInput)?.tarif ?? 1444.7;
-    const kwh = parseFloat(kwhInput) || 0;
-    const biaya = kwh * tarifPerKwh;
-    const ppj = biaya * 0.03;
-    const total = biaya + ppj;
-
-    const filtered = filterJenis === "Semua" ? tarifPLN : tarifPLN.filter(t => t.jenis === filterJenis);
+    const tarif = parseFloat(tarifInput) || 0;
+    const totalKwh = mockHarian.reduce((s, d) => s + d.kwh, 0);
+    const totalBiaya = mockHarian.reduce((s, d) => s + d.kwh * tarif, 0);
+    const ppj = totalBiaya * 0.03;
+    const grandTotal = totalBiaya + ppj;
 
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Tarif Listrik</h1>
-                    <p className="text-slate-500 mt-1">Referensi tarif PLN 2024 — Permen ESDM No. 3 Tahun 2020</p>
-                </div>
-                <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 px-4 py-2 rounded-xl text-sm text-blue-700">
-                    <Info className="w-4 h-4" />
-                    Data per Januari 2024
-                </div>
+            <div>
+                <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Tarif Listrik</h1>
+                <p className="text-slate-500 mt-1">Atur harga tarif dan lihat estimasi biaya harian</p>
             </div>
 
-            {/* Ringkasan Tarif Umum */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                    { label: "Tarif R-1 (1.300 VA)", value: "Rp 1.444,70", sub: "Rumah tangga", color: "bg-blue-700" },
-                    { label: "Tarif R-2/R-3", value: "Rp 1.699,53", sub: "Rumah tangga besar", color: "bg-indigo-600" },
-                    { label: "Tarif I-2/B-2", value: "Rp 1.444,70", sub: "Industri / Bisnis TR", color: "bg-amber-500" },
-                    { label: "Pajak Penerangan", value: "3%", sub: "Dari total biaya", color: "bg-slate-600" },
-                ].map((c, i) => (
-                    <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${c.color}`}>
-                            <Zap className="w-4 h-4 text-white" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-slate-500">{c.label}</p>
-                            <p className="text-lg font-bold text-slate-800">{c.value}</p>
-                            <p className="text-xs text-slate-400">{c.sub}</p>
-                        </div>
+            {/* Input Harga */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2 rounded-lg bg-blue-700">
+                        <Zap className="w-5 h-5 text-white" />
                     </div>
-                ))}
+                    <div>
+                        <h2 className="text-lg font-semibold text-slate-700">Harga Tarif per kWh</h2>
+                        <p className="text-xs text-slate-400">Masukkan harga tarif listrik yang berlaku</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3 max-w-sm">
+                    <span className="text-slate-500 font-medium text-sm whitespace-nowrap">Rp</span>
+                    <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={tarifInput}
+                        onChange={e => setTarifInput(e.target.value)}
+                        className="flex-1 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-800 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        placeholder="1444.70"
+                    />
+                    <span className="text-slate-500 text-sm">/ kWh</span>
+                </div>
+                {tarif > 0 && (
+                    <p className="mt-3 text-sm text-blue-700 font-medium">
+                        ✓ Menggunakan tarif <strong>Rp {tarif.toLocaleString("id-ID", { minimumFractionDigits: 2 })}</strong> per kWh
+                    </p>
+                )}
             </div>
 
-            {/* Layout 2 kolom: Tabel + Kalkulator */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Tabel Harian */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+                    <Receipt className="w-5 h-5 text-blue-700" />
+                    <h2 className="text-lg font-semibold text-slate-700">Daftar Konsumsi & Biaya Harian</h2>
+                    <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Maret 2026</span>
+                </div>
 
-                {/* Tabel Tarif PLN */}
-                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-blue-700" />
-                            <h2 className="text-lg font-semibold text-slate-700">Daftar Tarif per Golongan</h2>
-                        </div>
-                        <select
-                            value={filterJenis}
-                            onChange={e => setFilterJenis(e.target.value)}
-                            className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        >
-                            {jenisOptions.map(j => <option key={j}>{j}</option>)}
-                        </select>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                                    <th className="px-4 py-3 text-left">Golongan</th>
-                                    <th className="px-4 py-3 text-left">Batas Daya</th>
-                                    <th className="px-4 py-3 text-left">Jenis</th>
-                                    <th className="px-4 py-3 text-right">Tarif (Rp/kWh)</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {filtered.map((row, i) => (
-                                    <tr key={i} className="hover:bg-blue-50/40 transition-colors">
-                                        <td className="px-4 py-2.5 font-mono font-semibold text-slate-700">{row.golongan}</td>
-                                        <td className="px-4 py-2.5 text-slate-600">{row.daya}</td>
-                                        <td className="px-4 py-2.5">
-                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${jenisWarna[row.jenis] ?? "bg-slate-100 text-slate-600"}`}>
-                                                {row.jenis}
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                                <th className="px-5 py-3 text-left w-8">#</th>
+                                <th className="px-5 py-3 text-left">Tanggal</th>
+                                <th className="px-5 py-3 text-left">Hari</th>
+                                <th className="px-5 py-3 text-right">Konsumsi (kWh)</th>
+                                <th className="px-5 py-3 text-right">Harga Harian (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {mockHarian.map((row, i) => {
+                                const biayaHarian = row.kwh * tarif;
+                                const isWeekend = row.hari === "Sabtu" || row.hari === "Minggu";
+                                return (
+                                    <tr key={i} className={`hover:bg-blue-50/40 transition-colors ${isWeekend ? "bg-slate-50/60" : ""}`}>
+                                        <td className="px-5 py-2.5 text-slate-400 text-xs">{i + 1}</td>
+                                        <td className="px-5 py-2.5 font-medium text-slate-700">{row.tgl}</td>
+                                        <td className="px-5 py-2.5">
+                                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isWeekend ? "bg-slate-100 text-slate-500" : "bg-blue-50 text-blue-600"}`}>
+                                                {row.hari}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-2.5 text-right font-bold text-slate-800">
-                                            Rp {row.tarif.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        <td className="px-5 py-2.5 text-right text-slate-700 font-medium">{row.kwh.toFixed(1)}</td>
+                                        <td className="px-5 py-2.5 text-right font-semibold text-slate-800">
+                                            {tarif > 0
+                                                ? `Rp ${biayaHarian.toLocaleString("id-ID", { maximumFractionDigits: 0 })}`
+                                                : <span className="text-slate-300">—</span>}
                                         </td>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div className="px-6 py-3 border-t border-slate-100 text-xs text-slate-400">
-                        Sumber: Peraturan Menteri ESDM No. 3 Tahun 2020 & penyesuaian 2022–2024. TR = Tegangan Rendah, TM = Tegangan Menengah, TT = Tegangan Tinggi.
-                    </div>
-                </div>
+                                );
+                            })}
+                        </tbody>
 
-                {/* Kalkulator Biaya */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <div className="flex items-center gap-2 mb-5">
-                        <div className="p-2 rounded-lg bg-blue-700">
-                            <Calculator className="w-5 h-5 text-white" />
-                        </div>
-                        <h2 className="text-lg font-semibold text-slate-700">Kalkulator Biaya</h2>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1.5">Golongan Tarif</label>
-                            <select
-                                value={golonganInput}
-                                onChange={e => setGolonganInput(e.target.value)}
-                                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            >
-                                {Array.from(new Set(tarifPLN.map(t => t.golongan))).map(g => (
-                                    <option key={g}>{g}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1.5">Konsumsi (kWh)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                placeholder="Contoh: 250"
-                                value={kwhInput}
-                                onChange={e => setKwhInput(e.target.value)}
-                                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            />
-                        </div>
-
-                        {/* Tarif yang digunakan */}
-                        <div className="bg-slate-50 rounded-xl p-3 text-xs text-slate-500">
-                            Tarif: <span className="font-semibold text-slate-700">Rp {tarifPerKwh.toLocaleString("id-ID", { minimumFractionDigits: 2 })}/kWh</span>
-                        </div>
-
-                        {/* Hasil */}
-                        <div className="border-t border-slate-100 pt-4 space-y-2">
-                            <div className="flex justify-between text-sm text-slate-600">
-                                <span>Biaya Pemakaian</span>
-                                <span className="font-medium">Rp {biaya.toLocaleString("id-ID", { maximumFractionDigits: 0 })}</span>
-                            </div>
-                            <div className="flex justify-between text-sm text-slate-600">
-                                <span>PPJ (3%)</span>
-                                <span className="font-medium">Rp {ppj.toLocaleString("id-ID", { maximumFractionDigits: 0 })}</span>
-                            </div>
-                            <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                                <span className="font-bold text-slate-800">Total Estimasi</span>
-                                <span className="text-xl font-bold text-blue-700">
-                                    Rp {total.toLocaleString("id-ID", { maximumFractionDigits: 0 })}
-                                </span>
-                            </div>
-                        </div>
-
-                        {kwh > 0 && (
-                            <div className="bg-blue-50 rounded-xl p-3 text-xs text-blue-700 space-y-1">
-                                <p>⚡ Biaya per hari: <strong>Rp {(total / 30).toLocaleString("id-ID", { maximumFractionDigits: 0 })}</strong></p>
-                                <p>📅 Estimasi per tahun: <strong>Rp {(total * 12).toLocaleString("id-ID", { maximumFractionDigits: 0 })}</strong></p>
-                            </div>
-                        )}
-                    </div>
+                        {/* Footer Total */}
+                        <tfoot>
+                            <tr className="bg-slate-50 border-t-2 border-slate-200">
+                                <td colSpan={3} className="px-5 py-3 font-bold text-slate-700 text-sm">Subtotal (30 hari)</td>
+                                <td className="px-5 py-3 text-right font-bold text-slate-800">{totalKwh.toFixed(1)} kWh</td>
+                                <td className="px-5 py-3 text-right font-bold text-slate-800">
+                                    {tarif > 0 ? `Rp ${totalBiaya.toLocaleString("id-ID", { maximumFractionDigits: 0 })}` : "—"}
+                                </td>
+                            </tr>
+                            {tarif > 0 && (
+                                <>
+                                    <tr className="bg-slate-50">
+                                        <td colSpan={4} className="px-5 py-2 text-sm text-slate-500">PPJ (Pajak Penerangan Jalan 3%)</td>
+                                        <td className="px-5 py-2 text-right text-sm text-slate-600 font-medium">
+                                            Rp {ppj.toLocaleString("id-ID", { maximumFractionDigits: 0 })}
+                                        </td>
+                                    </tr>
+                                    <tr className="bg-blue-700">
+                                        <td colSpan={4} className="px-5 py-4 text-white font-bold text-base">
+                                            TOTAL TAGIHAN BULAN INI
+                                        </td>
+                                        <td className="px-5 py-4 text-right text-white font-bold text-xl">
+                                            Rp {grandTotal.toLocaleString("id-ID", { maximumFractionDigits: 0 })}
+                                        </td>
+                                    </tr>
+                                </>
+                            )}
+                        </tfoot>
+                    </table>
                 </div>
             </div>
         </div>
