@@ -23,10 +23,11 @@ export default function Home() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dateTime, setDateTime] = useState({ date: '', time: '', lastUpdate: '' });
 
   useEffect(() => {
     const getMockData = () => ({
-      last_updated: new Date().toLocaleTimeString('id-ID', { hour12: false }) + ' (Mock)',
+      last_updated: new Date().toLocaleString('id-ID', { hour12: false }),
       total_kwh: 145.2,
       estimasi_tagihan: 210000,
       tegangan: 220,
@@ -40,14 +41,26 @@ export default function Home() {
       setLoading(false);
     }, 500);
 
+    // Live clock — ticks every second
+    const clockTick = () => {
+      const now = new Date();
+      setDateTime({
+        date: now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+        time: now.toLocaleTimeString('id-ID', { hour12: false }),
+        lastUpdate: now.toLocaleString('id-ID', { hour12: false }),
+      });
+    };
+    clockTick();
+    const clockInterval = setInterval(clockTick, 1000);
+
     const interval = setInterval(() => {
       setData((prev: any) => ({
         ...prev,
-        last_updated: new Date().toLocaleTimeString('id-ID', { hour12: false }) + ' (Mock)'
+        last_updated: new Date().toLocaleString('id-ID', { hour12: false }),
       }));
     }, 5000);
 
-    return () => { clearTimeout(timer); clearInterval(interval); };
+    return () => { clearTimeout(timer); clearInterval(interval); clearInterval(clockInterval); };
   }, []);
 
   if (loading && !data) {
@@ -112,19 +125,16 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Dashboard Overview</h1>
-          <p className="text-slate-500 mt-1">Pemantauan Konsumsi Listrik Real-time — 1 Fasa</p>
-        </div>
-        <div className="text-sm text-slate-500 bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 flex items-center gap-2">
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-          </span>
-          Update terakhir: {data.last_updated}
-        </div>
+      {/* Header — centered style like reference */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 py-8 px-6 text-center">
+        <h1 className="text-3xl font-bold text-slate-800 leading-tight">Dashboard</h1>
+        <h2 className="text-3xl font-bold text-slate-800 mt-1">Monitoring Listrik 1 Fasa</h2>
+        <p className="text-slate-500 mt-3 text-base">
+          {dateTime.date} | {dateTime.time}
+        </p>
+        <p className="mt-2 text-sm font-semibold text-green-600">
+          Status Sistem: Hidup (Data Terakhir: {data.last_updated})
+        </p>
       </div>
 
       {/* Summary Cards */}
