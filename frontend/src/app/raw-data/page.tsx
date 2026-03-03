@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Search, Download, ChevronLeft, ChevronRight, Wifi } from "lucide-react";
+import { Table, Search, Download, ChevronLeft, ChevronRight, Wifi, X, CalendarRange } from "lucide-react";
 
 // Mock data: raw ESP32 sensor readings — single phase
 const generateMockData = () => {
     const records = [];
-    const base = new Date("2026-03-03T00:00:00");
-    for (let i = 0; i < 100; i++) {
-        const ts = new Date(base.getTime() + i * 15 * 60 * 1000); // every 15 minutes
+    // Generate for 3 days so date range filter is meaningful
+    const base = new Date("2026-03-01T00:00:00");
+    for (let i = 0; i < 288; i++) { // 288 = 3 days × 96 records/day (every 15 min)
+        const ts = new Date(base.getTime() + i * 15 * 60 * 1000);
         const hour = ts.getHours();
         const loadFactor = hour >= 7 && hour <= 20 ? 1.0 + Math.random() * 0.5 : 0.3 + Math.random() * 0.3;
         const v = +(215 + Math.random() * 8).toFixed(1);
@@ -17,11 +18,9 @@ const generateMockData = () => {
         const pf = +(0.88 + Math.random() * 0.08).toFixed(2);
         records.push({
             id: i + 1,
+            isoDate: ts.toISOString().slice(0, 10), // "YYYY-MM-DD" for range filtering
             timestamp: ts.toLocaleString("id-ID", { hour12: false }),
-            v,
-            a,
-            kw,
-            pf,
+            v, a, kw, pf,
             status: Math.random() > 0.06 ? "Normal" : "Warning",
         });
     }
@@ -35,6 +34,9 @@ export default function RawData() {
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [statusFilter, setStatusFilter] = useState("Semua");
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [exportFrom, setExportFrom] = useState("2026-03-01");
+    const [exportTo, setExportTo] = useState("2026-03-03");
 
     const filtered = allData.filter((row) => {
         const matchSearch = row.timestamp.includes(search) || String(row.id).includes(search);
@@ -43,8 +45,13 @@ export default function RawData() {
     });
 
     const exportCSV = () => {
+        const rangeFiltered = filtered.filter(row => row.isoDate >= exportFrom && row.isoDate <= exportTo);
+        if (rangeFiltered.length === 0) {
+            alert("Tidak ada data pada rentang tanggal yang dipilih.");
+            return;
+        }
         const headers = ["ID", "Timestamp", "Tegangan (V)", "Arus (A)", "Daya (kW)", "Power Factor", "Status"];
-        const rows = filtered.map(row =>
+        const rows = rangeFiltered.map(row =>
             [row.id, row.timestamp, row.v, row.a, row.kw, row.pf, row.status].join(",")
         );
         const csvContent = [headers.join(","), ...rows].join("\n");
@@ -52,9 +59,10 @@ export default function RawData() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `tabel-pengukuran-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.download = `tabel-pengukuran_${exportFrom}_sd_${exportTo}.csv`;
         link.click();
         URL.revokeObjectURL(url);
+        setShowExportModal(false);
     };
 
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -68,16 +76,93 @@ export default function RawData() {
                     <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Tabel Pengukuran</h1>
                     <p className="text-slate-500 mt-1">Catatan data mentah dari sensor ESP32 — interval 15 menit</p>
                 </div>
-                <button onClick={exportCSV} className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800 transition-colors shadow-sm">
+                <button
+                    onClick={() => setShowExportModal(true)}
+                    className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800 transition-colors shadow-sm"
+                >
                     <Download className="w-4 h-4" />
                     Export CSV
                 </button>
             </div>
 
+            {/* Export Modal */}
+            {showExportModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 mx-4">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between mb-5">
+                            <div className="flex items-center gap-2">
+                                <div className="p-2 rounded-lg bg-blue-700">
+                                    <CalendarRange className="w-4 h-4 text-white" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-slate-800">Export Data ke CSV</h3>
+                            </div>
+                            <button
+                                onClick={() => setShowExportModal(false)}
+                                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Date Range Inputs */}
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Tanggal Mulai</label>
+                                <input
+                                    type="date"
+                                    value={exportFrom}
+                                    min="2026-03-01"
+                                    max="2026-03-03"
+                                    onChange={e => setExportFrom(e.target.value)}
+                                    className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Tanggal Akhir</label>
+                                <input
+                                    type="date"
+                                    value={exportTo}
+                                    min="2026-03-01"
+                                    max="2026-03-03"
+                                    onChange={e => setExportTo(e.target.value)}
+                                    className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                />
+                            </div>
+
+                            {/* Preview count */}
+                            <div className="bg-slate-50 rounded-xl px-4 py-3 text-sm text-slate-600 border border-slate-100">
+                                📊 Jumlah record yang akan di-export:{" "}
+                                <strong className="text-blue-700">
+                                    {filtered.filter(r => r.isoDate >= exportFrom && r.isoDate <= exportTo).length} record
+                                </strong>
+                            </div>
+                        </div>
+
+                        {/* Modal Actions */}
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => setShowExportModal(false)}
+                                className="flex-1 border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 transition"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={exportCSV}
+                                className="flex-1 bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-800 transition flex items-center justify-center gap-2"
+                            >
+                                <Download className="w-4 h-4" />
+                                Download CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Stats Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                    { label: "Total Record", value: allData.length, sub: "Hari ini" },
+                    { label: "Total Record", value: allData.length, sub: "3 hari" },
                     { label: "Record Normal", value: allData.filter(d => d.status === "Normal").length, sub: "Status aman" },
                     { label: "Record Warning", value: allData.filter(d => d.status === "Warning").length, sub: "Perlu dicek" },
                     { label: "Interval", value: "15 Menit", sub: "Auto refresh" },
@@ -154,8 +239,8 @@ export default function RawData() {
                                         <td className="px-5 py-2.5 text-right text-slate-600">{row.pf}</td>
                                         <td className="px-5 py-2.5 text-center">
                                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${row.status === "Warning"
-                                                ? "bg-amber-100 text-amber-700"
-                                                : "bg-green-100 text-green-700"
+                                                    ? "bg-amber-100 text-amber-700"
+                                                    : "bg-green-100 text-green-700"
                                                 }`}>
                                                 {row.status}
                                             </span>
