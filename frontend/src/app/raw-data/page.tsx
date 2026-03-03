@@ -42,6 +42,21 @@ export default function RawData() {
         return matchSearch && matchStatus;
     });
 
+    const exportCSV = () => {
+        const headers = ["ID", "Timestamp", "Tegangan (V)", "Arus (A)", "Daya (kW)", "Power Factor", "Status"];
+        const rows = filtered.map(row =>
+            [row.id, row.timestamp, row.v, row.a, row.kw, row.pf, row.status].join(",")
+        );
+        const csvContent = [headers.join(","), ...rows].join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `tabel-pengukuran-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
     const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -53,7 +68,7 @@ export default function RawData() {
                     <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Tabel Pengukuran</h1>
                     <p className="text-slate-500 mt-1">Catatan data mentah dari sensor ESP32 — interval 15 menit</p>
                 </div>
-                <button className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800 transition-colors shadow-sm">
+                <button onClick={exportCSV} className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800 transition-colors shadow-sm">
                     <Download className="w-4 h-4" />
                     Export CSV
                 </button>
@@ -139,8 +154,8 @@ export default function RawData() {
                                         <td className="px-5 py-2.5 text-right text-slate-600">{row.pf}</td>
                                         <td className="px-5 py-2.5 text-center">
                                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${row.status === "Warning"
-                                                    ? "bg-amber-100 text-amber-700"
-                                                    : "bg-green-100 text-green-700"
+                                                ? "bg-amber-100 text-amber-700"
+                                                : "bg-green-100 text-green-700"
                                                 }`}>
                                                 {row.status}
                                             </span>
